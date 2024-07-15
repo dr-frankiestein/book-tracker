@@ -1,4 +1,4 @@
-document.querySelector('button').addEventListener('click', searchForTitle)
+document.querySelector('#addBook').addEventListener('click', searchForTitle)
 
 const tbrList = []
 const readList = []
@@ -8,19 +8,22 @@ let tbrArray = localStorage.getItem('tbrList') ? JSON.parse(localStorage.getItem
 restoreBookMethods(tbrArray)
 console.log(tbrArray)
 
+
 tbrArray.forEach(book => book.addBookToList('tbr'))
-// function addBook(book) {
-//   const li = document.createElement('li')
-//   li.textContent = book
-//   ul.appendChild(li)
-// }
-// add to local storage
-// function addToStorage(newBook){
-//   tbrArray.push(newBook)
-//   localStorage.setItem('tbrList', JSON.stringify(tbrArray))
-//   newBook.addBookToList('tbr')
-//   document.querySelector('input').value('')
-// }
+addEventToItems()
+
+function addEventToItems() {
+    let items = document.querySelectorAll('li')
+    items.forEach(item => {
+    item.addEventListener('mouseover', (e) =>{
+      let currentTitle = e.target.innerText
+      currentTitle = currentTitle.split(' - ')[0]
+      sessionStorage.setItem("currentTitle", currentTitle)
+    }) 
+  })
+}
+
+
 
 class Book {
   constructor(title, author, coverUrl, yearPublished, dateAdded, bookOlid) {
@@ -37,13 +40,19 @@ class Book {
   createListEntry() {
     return `${this.title} - ${this.author} (${this.year})`;
   }
-  showCover(imgNode) {
-    imgNode.src = this.cover
+  showCover() {
+    const img = document.querySelector('#coverImg')
+    img.src = this.cover
+    img.style.display = 'block'
   }
   addBookToList() {
     const ul = document.getElementById('tbr')
+    const link = document.createElement('a')
+    link.href="./book-form.html"
+    link.textContent = this.createListEntry()
     const li = document.createElement('li')
-    li.textContent = this.createListEntry()
+    li.appendChild(link)
+    // li.textContent = this.createListEntry()
     // localStorage.getItem('tbrList') ? ul.prepend(li) : ul.append(li)
     ul.prepend(li)
   }
@@ -52,7 +61,7 @@ class Book {
     tbrArray.push(this)
     localStorage.setItem('tbrList', JSON.stringify(tbrArray))
     this.addBookToList('tbr')
-    document.querySelector('input').value('')
+    document.querySelector('input').value = ''
   }
 }
 
@@ -71,23 +80,29 @@ function searchForTitle() {
       console.log(bk)
       const coverUrl = getCoverUrl(bk.cover_i)
       const date = dateToday()
-
+      sessionStorage.setItem("currentTitle", bk.title)
       // In a more advanced version, this would take you to another page where you could edit this info before saving
       const newBook = new Book(bk.title, bk.author_name, coverUrl, bk.first_publish_year, date, bk.cover_edition_key)
       // tbrList.push(newBook)
       // newBook.addBookToList('tbr')
-
+      
+      newBook.showCover()
       // add new book to storage & push to DOM
       newBook.addToStorage()
+      addEventToItems()
+      
+      window.location.href = "./book-form.html"
       
     })
-    .catch(err => {
-      console.log(`error ${err}`)
-    });
-
+    // .catch(err => {
+    //   console.log(`error ${err}`)
+    // });
+    
 }
 
-
+function loadBookForm() {
+  window.location.href = "./book-form.html"
+}
 function getCoverUrl(coverId) {
   return `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
 
@@ -101,10 +116,16 @@ function dateToday() {
   let year = date.getFullYear();
 
   // This arrangement can be altered based on how we want the date's format to appear.
-  let currentDate = `${year}-${month}-${day}`;
+  let currentDate = new Date().toJSON().slice(0, 10);;
   return currentDate // "17-6-2022"
 }
 
+// function titleFromString(e) {
+//   let currentTitle = e.target.innerText
+//   currentTitle = currentTitle.split(' - ')[0]
+//   sessionStorage.setItem("currentTitle", currentTitle)
+
+// }
 // to get covers: https://covers.openlibrary.org/b/id/13913814-M.jpg
 // docs[i].cover_i
 
@@ -122,8 +143,12 @@ function restoreBookMethods(bookArray) {
       },
       addBookToList() {
         const ul = document.getElementById('tbr')
+        const link = document.createElement('a')
+        link.href="./book-form.html"
+        link.textContent = this.createListEntry()
         const li = document.createElement('li')
-        li.textContent = this.createListEntry()
+        li.appendChild(link)
+        // li.textContent = this.createListEntry()
         // localStorage.getItem('tbrList') ? ul.prepend(li) : ul.append(li)
         ul.prepend(li)
       },
@@ -132,7 +157,7 @@ function restoreBookMethods(bookArray) {
         tbrArray.push(this)
         localStorage.setItem('tbrList', JSON.stringify(tbrArray))
         this.addBookToList('tbr')
-        document.querySelector('input').value('')
+        document.querySelector('input').value = ''
       }
     }
     bookArray[i] = Object.assign(source, book)
